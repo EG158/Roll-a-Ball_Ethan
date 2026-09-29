@@ -4,11 +4,12 @@ public class CollectibleController : MonoBehaviour
 {
     [SerializeField] private AudioClip collectSound;
     [SerializeField] private GameObject collectParticlePrefab;
-    
+    private GameManager gameManager;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        // Finds the Game Manager in the Scene
+        gameManager = FindAnyObjectByType<GameManager>();    
     }
 
     // Update is called once per frame
@@ -20,10 +21,11 @@ public class CollectibleController : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-         AudioSource.PlayClipAtPoint(collectSound, transform.position);
+            gameManager.UpdateRemaining();
+            AudioSource.PlayClipAtPoint(collectSound, transform.position);
 
-         Instantiate(
-             collectParticlePrefab,
+            Instantiate(
+                collectParticlePrefab,
                 transform.position,
                 Quaternion.identity
          );
