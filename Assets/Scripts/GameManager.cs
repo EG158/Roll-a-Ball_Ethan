@@ -1,7 +1,3 @@
-using UnityEngine;
-using TMPro;  // Brings in the Text Mesh script package into this script
-using System.Collections;
-using UnityEngine.SceneManagement;
 /************************************************************
 * COMPONENT OF: Game Manager
 * REQUIRED DEPENDENCIES: TextMeshProUGUI
@@ -10,6 +6,12 @@ using UnityEngine.SceneManagement;
 * AUTHOR: Ethan Guo
 * VERSION: 1.0
 *************************************************************/
+
+using UnityEngine;
+using TMPro;  // Brings in the Text Mesh script package into this script
+using System.Collections;
+using UnityEngine.SceneManagement;
+
 public class GameManager : MonoBehaviour
 { 
     // UI text that shows collectibles remaining (assign in inspector)

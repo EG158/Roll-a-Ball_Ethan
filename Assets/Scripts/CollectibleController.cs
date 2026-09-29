@@ -1,3 +1,11 @@
+/*****************************************************************
+* COMPONENT OF: Collectible
+* REQUIRED DEPENDENCIES: GameManager
+* DESCRIPTION: Controls what happens when the player collects an item.
+* AUTHOR: Ethan
+* VERSION 1.0: Initial Version
+*****************************************************************/
+
 using UnityEngine;
 
 public class CollectibleController : MonoBehaviour
