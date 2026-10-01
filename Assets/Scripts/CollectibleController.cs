@@ -1,5 +1,5 @@
-* RELEASE NOTES VERSION 1.1: Add a behavior so that the Collectible rotates slowly about the y-axis.
 /*****************************************************************
+* RELEASE NOTES VERSION 1.1: Add a behavior so that the Collectible rotates slowly about the y-axis.
 * COMPONENT OF: Collectible
 * REQUIRED DEPENDENCIES: GameManager
 * DESCRIPTION: Slowly rotates the collectible around its y-axis and controls what happens when the player collects it.
