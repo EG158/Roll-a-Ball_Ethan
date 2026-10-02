@@ -1,10 +1,10 @@
 /*****************************************************************
-* RELEASE NOTES VERSION 1.1: Add a behavior so that the Collectible rotates slowly about the y-axis.
 * COMPONENT OF: Collectible
 * REQUIRED DEPENDENCIES: GameManager
 * DESCRIPTION: Slowly rotates the collectible around its y-axis and controls what happens when the player collects it.
 * AUTHOR: Ethan
 * VERSION 1.1: Slowly rotates the collectible around its y-axis.
+* RELEASE NOTES VERSION 1.1: Add a behavior so that the Collectible rotates slowly about the y-axis. 
 *****************************************************************/
 
 using UnityEngine;
@@ -30,10 +30,10 @@ public class CollectibleController : MonoBehaviour
         RotateCollectible();
     }
 
-    // Rotates the collectible around its local y-axis at a frame-rate-independent speed.
+    // Rotates the collectible around the world y-axis at a frame-rate-independent speed.
     private void RotateCollectible()
     {
-        transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f);
+        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
     }
 
         private void OnTriggerEnter(Collider other)
