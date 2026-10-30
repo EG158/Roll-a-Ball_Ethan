@@ -1,8 +1,8 @@
 /*****************************************************************
 * COMPONENT OF: Graybox walls that can block the follow camera
 * REQUIRED DEPENDENCIES: Renderer with one URP/Lit material
-* DESCRIPTION: Makes only the obstructing wall transparent, preserving its solid collider.
-* VERSION 1.0: Uses a private transparent material and restores the original when unobstructed.
+* DESCRIPTION: Makes an obstructing wall and its visual detail transparent while preserving its solid collider.
+* VERSION 1.1: Fades all renderers on the wall and its child decorations together.
 *****************************************************************/
 
 using UnityEngine;
@@ -15,9 +15,9 @@ public class PrototypeCameraOccluder : MonoBehaviour
     [SerializeField, Range(0.05f, 0.8f)] private float obstructedOpacity = 0.2f;
 
     // Keep the original asset unchanged so other walls retain their normal appearance.
-    private Renderer wallRenderer;
-    private Material originalMaterial;
-    private Material transparentMaterial;
+    private Renderer[] wallRenderers;
+    private Material[][] originalMaterials;
+    private Material[][] transparentMaterials;
     private bool obscured;
 
     private void Awake()
@@ -25,46 +25,72 @@ public class PrototypeCameraOccluder : MonoBehaviour
         PrepareMaterials();
     }
 
-    // Build a reusable runtime material instead of allocating a new one every camera frame.
+    // Build reusable runtime materials for the wall and its child decorations instead of allocating materials every camera frame.
     private void PrepareMaterials()
     {
-        wallRenderer = GetComponent<Renderer>();
-        originalMaterial = wallRenderer.sharedMaterial;
-        transparentMaterial = new Material(originalMaterial);
-        Color color = originalMaterial.color;
-        color.a = obstructedOpacity;
-        transparentMaterial.color = color;
+        // Include child renderers so decorative panels fade with the wall they cover.
+        wallRenderers = GetComponentsInChildren<Renderer>(true);
+        originalMaterials = new Material[wallRenderers.Length][];
+        transparentMaterials = new Material[wallRenderers.Length][];
 
-        // URP requires transparent blending and depth settings as well as an alpha value.
-        transparentMaterial.SetFloat("_Surface", 1f);
-        transparentMaterial.SetFloat("_Blend", 0f);
-        transparentMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-        transparentMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-        transparentMaterial.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
-        transparentMaterial.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-        transparentMaterial.SetFloat("_ZWrite", 0f);
-        transparentMaterial.SetFloat("_AlphaToMask", 0f);
-        // Draw both faces so the fade still works if the camera moves inside a thick wall.
-        transparentMaterial.SetFloat("_Cull", (float)CullMode.Off);
-        transparentMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        transparentMaterial.DisableKeyword("_ALPHATEST_ON");
-        transparentMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        transparentMaterial.SetOverrideTag("RenderType", "Transparent");
-        transparentMaterial.renderQueue = (int)RenderQueue.Transparent;
-        transparentMaterial.SetShaderPassEnabled("ShadowCaster", false);
-        transparentMaterial.SetShaderPassEnabled("DepthOnly", false);
-        transparentMaterial.SetShaderPassEnabled("DepthNormals", false);
+        for (int rendererIndex = 0; rendererIndex < wallRenderers.Length; rendererIndex++)
+        {
+            originalMaterials[rendererIndex] = wallRenderers[rendererIndex].sharedMaterials;
+            transparentMaterials[rendererIndex] = new Material[originalMaterials[rendererIndex].Length];
+
+            for (int materialIndex = 0; materialIndex < originalMaterials[rendererIndex].Length; materialIndex++)
+            {
+                Material originalMaterial = originalMaterials[rendererIndex][materialIndex];
+                if (originalMaterial == null)
+                {
+                    continue;
+                }
+
+                // A private copy lets this wall fade without changing the shared project material.
+                Material transparentMaterial = new Material(originalMaterial);
+                Color color = originalMaterial.color;
+                color.a = obstructedOpacity;
+                transparentMaterial.color = color;
+
+                // URP requires transparent blending and depth settings as well as an alpha value.
+                transparentMaterial.SetFloat("_Surface", 1f);
+                transparentMaterial.SetFloat("_Blend", 0f);
+                transparentMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                transparentMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                transparentMaterial.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+                transparentMaterial.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+                transparentMaterial.SetFloat("_ZWrite", 0f);
+                transparentMaterial.SetFloat("_AlphaToMask", 0f);
+                // Draw both faces so the fade still works if the camera moves inside a thick wall.
+                transparentMaterial.SetFloat("_Cull", (float)CullMode.Off);
+                transparentMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                transparentMaterial.DisableKeyword("_ALPHATEST_ON");
+                transparentMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                transparentMaterial.SetOverrideTag("RenderType", "Transparent");
+                transparentMaterial.renderQueue = (int)RenderQueue.Transparent;
+                transparentMaterial.SetShaderPassEnabled("ShadowCaster", false);
+                transparentMaterial.SetShaderPassEnabled("DepthOnly", false);
+                transparentMaterial.SetShaderPassEnabled("DepthNormals", false);
+                transparentMaterials[rendererIndex][materialIndex] = transparentMaterial;
+            }
+        }
     }
 
     // The camera calls this only for marked walls between its lens and the player's ball.
     public void SetObscured(bool isObscured)
     {
-        if (wallRenderer == null || obscured == isObscured)
+        if (wallRenderers == null || obscured == isObscured)
         {
             return;
         }
         obscured = isObscured;
-        wallRenderer.sharedMaterial = obscured ? transparentMaterial : originalMaterial;
+        // Fade or restore every cached material so the entire wall assembly changes together.
+        for (int rendererIndex = 0; rendererIndex < wallRenderers.Length; rendererIndex++)
+        {
+            wallRenderers[rendererIndex].sharedMaterials = obscured
+                ? transparentMaterials[rendererIndex]
+                : originalMaterials[rendererIndex];
+        }
     }
 
     // Disabling a wall or camera should never leave a material stuck in its faded state.
@@ -75,10 +101,21 @@ public class PrototypeCameraOccluder : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Only the private runtime copy belongs to this component; never destroy the asset.
-        if (transparentMaterial != null)
+        // Only these private runtime copies belong to the component; never destroy project material assets.
+        if (transparentMaterials == null)
         {
-            Destroy(transparentMaterial);
+            return;
+        }
+
+        foreach (Material[] rendererMaterials in transparentMaterials)
+        {
+            foreach (Material material in rendererMaterials)
+            {
+                if (material != null)
+                {
+                    Destroy(material);
+                }
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
 * COMPONENT OF: Unity Editor Tools menu
 * REQUIRED DEPENDENCIES: Original Roll-A-Ball scene, Input System, TextMeshPro, prototype scripts
 * DESCRIPTION: Builds the four-section graybox course described in the GDD.
-* VERSION 1.6: Adds smaller jump targets, varied landing heights and two timed moving platforms.
+* VERSION 1.8: Applies the industrial visual pass to the player, collectibles and finish presentation after building.
 *****************************************************************/
 
 using System.Collections.Generic;
@@ -43,6 +43,8 @@ public static class BuildGrayboxGameplayTest
 
         EditorSceneManager.MarkSceneDirty(prototypeScene);
         EditorSceneManager.SaveScene(prototypeScene, OutputScenePath);
+        // Apply the saved industrial materials and visual-only details to the newly built scene.
+        ApplyIndustrialArtDressing.Apply();
         Debug.Log("Graybox gameplay test created at " + OutputScenePath);
     }
 
@@ -618,7 +620,7 @@ public static class BuildGrayboxGameplayTest
 
     private static void CreateFinishMarker(Material material)
     {
-        Material cyan = CreateMaterial("Prototype Finish Cyan", new Color(0.1f, 0.85f, 0.95f));
+        Material amber = CreateMaterial("Prototype Finish Amber", new Color(0.86f, 0.45f, 0.16f));
         Material white = CreateMaterial("Prototype Finish White", new Color(0.92f, 0.96f, 1f));
         Material ink = CreateMaterial("Prototype Finish Ink", new Color(0.025f, 0.035f, 0.05f));
         // All floor graphics are visual-only and sit just above the same flat collision surface.
@@ -631,21 +633,21 @@ public static class BuildGrayboxGameplayTest
                     new Vector3(0.6f, 0.006f, 0.8f), (row + square) % 2 == 0 ? white : ink);
             }
         }
-        CreateFloorGraphic("Finish Left Border", new Vector3(66f, 0.503f, -4.2f), new Vector3(9.5f, 0.006f, 0.12f), cyan);
-        CreateFloorGraphic("Finish Right Border", new Vector3(66f, 0.503f, 4.2f), new Vector3(9.5f, 0.006f, 0.12f), cyan);
+        CreateFloorGraphic("Finish Left Border", new Vector3(66f, 0.503f, -4.2f), new Vector3(9.5f, 0.006f, 0.12f), amber);
+        CreateFloorGraphic("Finish Right Border", new Vector3(66f, 0.503f, 4.2f), new Vector3(9.5f, 0.006f, 0.12f), amber);
         // Keep the arch outside the walking area and beyond the finish stripe.
         CreateBlock("Finish Arch Left", new Vector3(68.5f, 2.5f, -3.7f), new Vector3(0.4f, 4f, 0.4f), material);
         CreateBlock("Finish Arch Right", new Vector3(68.5f, 2.5f, 3.7f), new Vector3(0.4f, 4f, 0.4f), material);
         CreateBlock("Finish Arch Header", new Vector3(68.5f, 4.5f, 0f), new Vector3(0.5f, 0.65f, 7.8f), material);
-        CreateBlock("Finish Arch Accent Left", new Vector3(68.25f, 2.5f, -3.7f), new Vector3(0.05f, 3.6f, 0.12f), cyan);
-        CreateBlock("Finish Arch Accent Right", new Vector3(68.25f, 2.5f, 3.7f), new Vector3(0.05f, 3.6f, 0.12f), cyan);
+        CreateBlock("Finish Arch Accent Left", new Vector3(68.25f, 2.5f, -3.7f), new Vector3(0.05f, 3.6f, 0.12f), amber);
+        CreateBlock("Finish Arch Accent Right", new Vector3(68.25f, 2.5f, 3.7f), new Vector3(0.05f, 3.6f, 0.12f), amber);
         GameObject sign = new GameObject("Finish Sign");
         sign.transform.SetPositionAndRotation(new Vector3(68.22f, 4.5f, 0f), Quaternion.Euler(0f, 90f, 0f));
         TextMeshPro label = sign.AddComponent<TextMeshPro>();
         label.text = "F I N I S H";
         label.fontSize = 4.2f;
         label.alignment = TextAlignmentOptions.Center;
-        label.color = cyan.color;
+        label.color = amber.color;
         label.rectTransform.sizeDelta = new Vector2(7f, 0.7f);
     }
 
@@ -672,23 +674,23 @@ public static class BuildGrayboxGameplayTest
         group.blocksRaycasts = false;
         group.interactable = false;
         Image dimmer = overlay.gameObject.AddComponent<Image>();
-        dimmer.color = new Color(0.01f, 0.025f, 0.04f, 0.18f);
+        dimmer.color = new Color(0.018f, 0.022f, 0.024f, 0.38f);
         dimmer.raycastTarget = false;
         RectTransform card = CreateUIRect("Victory Card", overlay, new Vector2(0.5f, 0.77f), new Vector2(660f, 240f), Vector2.zero);
         Image panel = card.gameObject.AddComponent<Image>();
-        panel.color = new Color(0.025f, 0.055f, 0.075f, 0.96f);
+        panel.color = new Color(0.055f, 0.065f, 0.07f, 0.97f);
         panel.raycastTarget = false;
         Outline border = card.gameObject.AddComponent<Outline>();
-        border.effectColor = new Color(0.1f, 0.85f, 0.95f, 0.55f);
-        border.effectDistance = new Vector2(1f, -1f);
+        border.effectColor = new Color(0.78f, 0.42f, 0.16f, 0.9f);
+        border.effectDistance = new Vector2(2f, -2f);
         CreateVictoryLabel(template, card, "Victory Heading", "COURSE COMPLETE", 18f,
-            new Color(0.2f, 0.85f, 0.95f), new Vector2(0f, 80f), new Vector2(620f, 28f));
+            new Color(0.86f, 0.61f, 0.29f), new Vector2(0f, 80f), new Vector2(620f, 28f));
         CreateVictoryLabel(template, card, "Victory Title", "YOU WIN!", 64f,
             Color.white, new Vector2(0f, 24f), new Vector2(620f, 85f));
         CreateVictoryLabel(template, card, "Victory Details", "4 / 4 COLLECTIBLES  |  ALL SECTIONS CLEARED", 18f,
-            new Color(0.95f, 0.78f, 0.3f), new Vector2(0f, -36f), new Vector2(620f, 32f));
+            new Color(0.86f, 0.61f, 0.29f), new Vector2(0f, -36f), new Vector2(620f, 32f));
         TextMeshProUGUI countdown = CreateVictoryLabel(template, card, "Victory Countdown", "Next run in 6 seconds", 16f,
-            new Color(0.65f, 0.74f, 0.8f), new Vector2(0f, -86f), new Vector2(620f, 28f));
+            new Color(0.78f, 0.79f, 0.77f), new Vector2(0f, -86f), new Vector2(620f, 28f));
         overlay.gameObject.SetActive(false);
 
         GameObject anchor = new GameObject("Victory Celebration Point");
